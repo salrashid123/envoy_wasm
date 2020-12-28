@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package echo;
+
+service EchoServer {
+  rpc SayHello (EchoRequest) returns (EchoReply) {}
+  rpc SayHelloStream(EchoRequest) returns (stream EchoReply) {}    
+}
+
+message EchoRequest {
+  string name = 1;
+}
+
+message EchoReply {
+  string message = 1;
+}
+
+// this proto represents configuration for the example filter
+message Config {
+  string clustername = 1;
+}
+
