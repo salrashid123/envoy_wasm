@@ -11,11 +11,10 @@
 #include "examples/wasm-cc/echo/echo.pb.h"
 
 static constexpr char EchoServerServiceName[] = "echo.EchoServer";
-static constexpr char SayHelloMethodName[] = "SayHello";
+static constexpr char SayHelloMethodName[] = "SayHelloUnary";
 
 using google::protobuf::util::JsonParseOptions;
-using google::protobuf::util::error::Code;
-using google::protobuf::util::Status;
+
 
 using echo::EchoRequest;
 using echo::EchoReply;
@@ -94,11 +93,11 @@ bool ExampleRootContext::onConfigure(size_t config_size) {
   const WasmDataPtr configuration = getBufferBytes(WasmBufferType::PluginConfiguration, 0, config_size);
 
     JsonParseOptions json_options;
-    const Status options_status = JsonStringToMessage(
+    if (!JsonStringToMessage(
         configuration->toString(),
         &config_,
-        json_options);
-    if (options_status != Status::OK) {
+        json_options).ok()) {
+
       LOG_WARN("Cannot parse plugin configuration JSON string: " + configuration->toString());
       return false;
     }

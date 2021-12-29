@@ -66,7 +66,7 @@ static_resources:
                     "@type": "type.googleapis.com/google.protobuf.StringValue"
                     value: |
                       {
-                       "clustername": "ext-dlp.default.svc.cluster.local",
+                       "clustername": "grpc.domain.com",
                       }   
                   vm_config:
                     runtime: "envoy.wasm.runtime.v8"
@@ -93,12 +93,12 @@ static_resources:
               socket_address:
                 address: httpbin.org
                 port_value: 80
-  - name: ext-dlp.default.svc.cluster.local
+  - name: grpc.domain.com
     type: static
     connect_timeout: 1s
     http2_protocol_options: {}
     load_assignment:
-      cluster_name: ext-dlp.default.svc.cluster.local
+      cluster_name: grpc.domain.com
       endpoints:
       - lb_endpoints:
         - endpoint:
@@ -114,5 +114,15 @@ static_resources:
         unhealthy_threshold: 1
         healthy_threshold: 3
         grpc_health_check:
-          service_name: "helloworld.SayHello"
-          authority: "server.domain.com"
+          service_name: "echo.EchoServer"
+          authority: "grpc.domain.com"
+    transport_socket:
+      name: envoy.transport_sockets.tls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+        common_tls_context:
+          validation_context:
+            match_subject_alt_names:
+              exact: "grpc.domain.com"
+            trusted_ca:
+              filename: "certs/tls-ca-chain.crt"

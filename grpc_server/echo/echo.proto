@@ -1,10 +1,11 @@
 syntax = "proto3";
 
 package echo;
+option go_package = "github.com/salrashid123/envoy_wasm/echo";
 
 service EchoServer {
   rpc SayHelloUnary (EchoRequest) returns (EchoReply) {}
-  rpc SayHelloServerStream(EchoRequest) returns (stream EchoReply) {}    
+  rpc SayHelloServerStream(EchoRequest) returns (stream EchoReply) {}
 }
 
 message EchoRequest {
@@ -14,9 +15,3 @@ message EchoRequest {
 message EchoReply {
   string message = 1;
 }
-
-// this proto represents configuration for the example filter
-message Config {
-  string clustername = 1;
-}
-

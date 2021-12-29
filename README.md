@@ -4,19 +4,21 @@ Sample for envoy with WASM filter where the filter will invoke an external GRPC 
 
 THe full flow is like this:
 
-`client` -> 
+```
+client -> 
+
     (jwt_header) -> 
       [ 
-        `envoy.filters.network.http_connection_manager` ->
-        `envoy.filters.http.jwt_authn` ->
-        `envoy.filters.http.wasm` ->
+        envoy.filters.network.http_connection_manager ->
+        envoy.filters.http.jwt_authn ->
+        envoy.filters.http.wasm ->
       ]
-      -> (api_req) -> (jwt_header) `gRPC server` -> (api_resp)
+      -> (api_req) -> (jwt_header) gRPC server -> (api_resp)
                                                             -> [
-                                                                ` envoy.filters.http.router`
+                                                                 envoy.filters.http.router
                                                                ] 
-                                                                 -> `upstream_server`
-
+                                                                 -> upstream_server
+```
 Basically, the client transmits a jwt bearer authorization token to envoy.
 Envoy will first validate the JWT header using its native `jwt_authn` filter
 Once validated, the decoded JWT claims are emitted as metadata to a wasm filter
@@ -50,13 +52,13 @@ To use this sample, you'll need:
 * envoy `1.17`
 
 ```bash
-docker cp `docker create envoyproxy/envoy-dev:latest`:/usr/local/bin/envoy .
+docker cp `docker create envoyproxy/envoy-dev:latest`:/usr/local/bin/envoy /tmp/
 
-./envoy --version
-   envoy  version: 483dd3007f15e47deed0a29d945ff776abb37815/1.17.0-dev/Clean/RELEASE/BoringSSL
+/tmp/envoy --version
+   version: 27c507ee0ae51713dbdf66a24cb9a47f46700b78/1.20.0-dev/Clean/RELEASE/BoringSSL
 ```
 
-* golang 1.15
+* golang 1.17
 * optional `protoc`
 
 ---
@@ -64,13 +66,11 @@ docker cp `docker create envoyproxy/envoy-dev:latest`:/usr/local/bin/envoy .
 ### Setup
 
 #### Build wasm filter
+
 First clone envoy and build the filter
+
 ```bash
 git clone https://github.com/envoyproxy/envoy.git
-cd envoy
-git checkout 483dd3007f15e47deed0a29d945ff776abb37815
-cd ..
-
 rm -rf envoy/examples/wasm-cc/
 cp -R wasm-cc envoy/examples
 ```
@@ -82,20 +82,37 @@ cd envoy
 bazel build //examples/wasm-cc:envoy_filter_http_wasm_example.wasm
 ```
 
+#### Host override
+
+Add to `/etc/hosts`
+
+```bash
+127.0.0.1	grpc.domain.com
+```
+
+This is the address for the grpc server (this is just for convenience to make the SNI match 
+
+(you don't need to do this but i got lazy with the envoy config...TODO: configure envoy better)
+
 #### Run Envoy
 
 ```bash
-envoy -c envoy-wasm.yaml -l debug
+/tmp/envoy -c envoy-wasm.yaml -l debug
 ```
 
 #### Run gRPC Server 
 
 ```bash
+cd grpc_server/
+
 # (optional) recompile protos
-# /usr/local/bin/protoc -I src/  --include_imports --include_source_info  --descriptor_set_out=src/echo/echo.proto.pb  --go_out=plugins=grpc:src/ src/echo/echo.proto
+# /usr/local/bin/protoc --go_out=. --go_opt=paths=source_relative  --descriptor_set_out=echo/echo.proto.pb   --go-grpc_out=. --go-grpc_opt=paths=source_relative     echo/echo.proto
 
 # run server
-go run src/grpc_server.go 
+go run greeter_server/grpc_server.go --tlsCert grpc_server_crt.pem --tlsKey grpc_server_key.pem --grpcport :50051
+
+## test client
+# go run greeter_client/grpc_client.go  --host localhost:50051 --servername grpc.domain.com --cacert ../certs/tls-ca.crt
 ```
 
 #### Run CLient
@@ -104,6 +121,7 @@ We're going to use curl to emit two different pregenerated JWTs
 
 
 Alice's JWT includes her name in the `sub` field
+
 ```json
 {
   "alg": "RS256",
@@ -134,6 +152,16 @@ And bob includes his
 ```
 
 Now use their names to invoke 
+
+
+>> You can generate your own JWTs using istio's handy scripts here:
+
+```bash
+wget --no-verbose https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/gen-jwt.py
+wget --no-verbose https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/key.pem
+python3 gen-jwt.py -iss foo.bar -aud sal -expire 100000 key.pem
+JWK URI = "https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/jwks.json";
+```
 
 - Alice
 
@@ -250,7 +278,7 @@ A couple of notes about the flow:
                     "@type": "type.googleapis.com/google.protobuf.StringValue"
                     value: |
                       {
-                       "clustername": "ext-dlp.default.svc.cluster.local",
+                       "clustername": "grpc.domain.com",
                       } 
     ```  
 
