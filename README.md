@@ -159,7 +159,7 @@ Now use their names to invoke
 ```bash
 wget --no-verbose https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/gen-jwt.py
 wget --no-verbose https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/key.pem
-python3 gen-jwt.py -iss foo.bar -aud sal -expire 100000 key.pem
+python3 gen-jwt.py -iss foo.bar -aud sal -sub alice@domain.com -expire 10000 key.pem
 JWK URI = "https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/jwks.json";
 ```
 

@@ -76,6 +76,8 @@ static_resources:
                         filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_example.wasm"
                     configuration: {}                  
           - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router                
 
 
   clusters:
