@@ -115,7 +115,7 @@ go run greeter_server/grpc_server.go --tlsCert grpc_server_crt.pem --tlsKey grpc
 # go run greeter_client/grpc_client.go  --host localhost:50051 --servername grpc.domain.com --cacert ../certs/tls-ca.crt
 ```
 
-#### Run CLient
+#### Run Client
 
 We're going to use curl to emit two different pregenerated JWTs 
 
@@ -159,7 +159,7 @@ Now use their names to invoke
 ```bash
 wget --no-verbose https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/gen-jwt.py
 wget --no-verbose https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/key.pem
-python3 gen-jwt.py -iss foo.bar -aud sal -sub alice@domain.com -expire 10000 key.pem
+python3 gen-jwt.py -iss new-issuer@secure.istio.io -aud sal -sub alice@domain.com -expire 10000 key.pem
 JWK URI = "https://raw.githubusercontent.com/istio/istio/release-1.10/security/tools/jwt/samples/jwks.json";
 ```
 
